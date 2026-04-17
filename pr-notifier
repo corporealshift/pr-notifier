@@ -20,9 +20,14 @@ else
   WATCHED_LABELS=()
 fi
 
-# Repo to watch for labeled/review-requested PRs.
+# Repos to watch for labeled/review-requested PRs (comma-separated).
+# e.g. PR_NOTIFIER_WATCHED_REPO="fulcrumapp/fulcrum-ios,fulcrumapp/fulcrum-android"
 # To watch an entire org instead, clear this and set WATCHED_ORG.
-WATCHED_REPO="${PR_NOTIFIER_WATCHED_REPO:-}"
+if [[ -n "${PR_NOTIFIER_WATCHED_REPO:-}" ]]; then
+  IFS=',' read -ra WATCHED_REPOS <<< "$PR_NOTIFIER_WATCHED_REPO"
+else
+  WATCHED_REPOS=()
+fi
 WATCHED_ORG="${PR_NOTIFIER_WATCHED_ORG:-}"
 
 # Service accounts that are technically "User" type but are automation.
@@ -285,8 +290,10 @@ done
 # ─── 5. Watched PRs: label + review-requested monitoring ─────────────────────
 
 watch_scope=""
-if [[ -n "$WATCHED_REPO" ]]; then
-  watch_scope="repo:${WATCHED_REPO}"
+if (( ${#WATCHED_REPOS[@]} > 0 )); then
+  for _repo in "${WATCHED_REPOS[@]}"; do
+    watch_scope+="repo:${_repo} "
+  done
 elif [[ -n "$WATCHED_ORG" ]]; then
   watch_scope="org:${WATCHED_ORG}"
 fi
